@@ -32,7 +32,7 @@ const BADGES=[
   {id:"table",t:"Кесте шебері",d:"Көбейту кестесін қатесіз шеш"},
   {id:"units",t:"Өлшем білгірі",d:"Ұзындық, уақыт, масса — әрқайсысынан 3 жұлдыз"},
   {id:"words",t:"Сөз зергері",d:"Қазақ тілінен қатесіз шеш"},
-  {id:"fast",t:"Найзағай",d:"Раундты уақыттың жартысы қалғанда аяқта"},
+  {id:"fast",t:"Найзағай",d:"Әр сұраққа орта есеппен 20 секундтан аз жұмса"},
   {id:"blitz",t:"Блиц батыры",d:"Блицте 20 дұрыс жауап бер"},
   {id:"combo",t:"Комбо шебері",d:"Қатарынан 10 дұрыс жауап"},
   {id:"d3",t:"3 күн қатарынан",d:"3 күн қатарынан жаттық"},
@@ -144,7 +144,7 @@ function subject(s){
   <p class="lead2">${s==="math"?"Тақырыпты таңда. Әр раундта уақыт шектеулі — асық, бірақ абай бол!":"Тақырыпты таңда. Ережені оқып ал да, уақыт біткенше шеш!"}</p>
   <div class="topics">${IDS[s].map(id=>{const T=TOPICS[id],b=P.best[id];
     return `<button class="topic" data-t="${id}"><span class="tbadge" style="background:${T.c}">${esc(T.badge)}</span>
-    <span class="tmain"><b>${esc(T.title)}</b><small>${esc(T.sub)}</small><span class="tinfo">${I.clock}${T.blitz?"60 секунд":`${T.n} сұрақ · ${fmt(T.time)}`}</span></span>
+    <span class="tmain"><b>${esc(T.title)}</b><small>${esc(T.sub)}</small><span class="tinfo">${I.clock}${T.blitz?"60 секунд":`${T.n} сұрақ · әр сұраққа ${QT} сек`}</span></span>
     <span class="tstars">${T.blitz?`<b>${P.blitz||0}</b><small>рекорд</small>`:[0,1,2].map(k=>I.star(b&&k<b.stars?"var(--sun)":"var(--paper)")).join("")}</span></button>`}).join("")}</div>`,()=>{
     bindBar(hub);document.querySelectorAll(".topic").forEach(b=>b.onclick=()=>intro(b.dataset.t));
   });
@@ -157,34 +157,37 @@ function intro(id){
     <h2>${esc(T.title)}</h2><p class="sub">${esc(T.sub)}</p>
     <div class="rule"><b>Есте сақта!</b><ul>${T.rule.map(r=>`<li>${esc(r)}</li>`).join("")}</ul></div>
     <div class="ibox">${T.blitz?`<div>${I.clock}<b>60 сек</b><span>уақыт</span></div><div>${I.bolt}<b>${P.blitz||0}</b><span>рекорд</span></div>`
-      :`<div><b>${T.n}</b><span>сұрақ</span></div><div>${I.clock}<b>${fmt(T.time)}</b><span>уақыт</span></div><div>${I.star("var(--sun)")}<b>${(P.best[id]&&P.best[id].stars)||0}/3</b><span>жұлдыз</span></div>`}</div>
-    <p class="sub">Дұрыс жауап +10 XP. Қатарынан 3 дұрыс — комбо, әр жауапқа +5 XP. Ерте бітірсең — уақыт бонусы!</p>
+      :`<div><b>${T.n}</b><span>сұрақ</span></div><div>${I.clock}<b>${QT} сек</b><span>әр сұраққа</span></div><div>${I.star("var(--sun)")}<b>${(P.best[id]&&P.best[id].stars)||0}/3</b><span>жұлдыз</span></div>`}</div>
+    <p class="sub">Дұрыс жауап +10 XP. Қатарынан 3 дұрыс — комбо, әр жауапқа +5 XP. Әр сұраққа 60 секунд беріледі. Тез жауап берсең — уақыт бонусы!</p>
     <button class="big" id="go">Бастау!</button>
   </section>`,()=>{bindBar(()=>subject(T.subj));document.getElementById("go").onclick=()=>startRound(id)});
 }
 
 /* ================= Раунд ================= */
 let R=null,timer=null;
+const QT=60; /* әр сұраққа берілетін уақыт, секунд */
+const fullMs=()=>R.T.blitz?R.T.time*1000:QT*1000;
 function makeList(gen,n){const out=[],seen=new Set();let g=0;while(out.length<n&&g<n*60){g++;const q=gen();if(seen.has(q.key))continue;seen.add(q.key);out.push(q)}return out}
 function startRound(id){
   const T=TOPICS[id];
-  R={id,T,list:makeList(T.gen,T.blitz?70:T.n),i:0,correct:0,pts:0,streak:0,bestStreak:0,wrong:[],left:T.time*1000,running:false,input:"",timeUp:false};
+  R={id,T,list:makeList(T.gen,T.blitz?70:T.n),i:0,correct:0,pts:0,streak:0,bestStreak:0,wrong:[],left:T.blitz?T.time*1000:QT*1000,used:0,saved:0,running:false,input:"",timeUp:false};
   tone([440],.05,"sine",.0001);screen="round";showQ();startTimer();
 }
 function startTimer(){
   stopTimer();let last=performance.now(),lastSec=Math.ceil(R.left/1000);
-  timer=setInterval(()=>{const now=performance.now();if(R.running&&!document.hidden&&!document.querySelector(".modal"))R.left-=now-last;last=now;
-    if(R.left<=0){R.left=0;drawTimer();stopTimer();timeUp();return}
+  timer=setInterval(()=>{const now=performance.now();if(R.running&&!document.hidden&&!document.querySelector(".modal")){R.left-=now-last;R.used+=now-last}last=now;
+    if(R.left<=0){R.left=0;drawTimer();if(R.T.blitz){stopTimer();timeUp()}else qTimeUp();return}
     const s=Math.ceil(R.left/1000);if(s!==lastSec){lastSec=s;if(s<=10&&R.running)sfx.tick()}
     drawTimer()},100);
 }
 function stopTimer(){if(timer){clearInterval(timer);timer=null}}
 function drawTimer(){const el=document.getElementById("tmr");if(!el||!R)return;const s=Math.ceil(R.left/1000);
   el.querySelector("span").textContent=fmt(s);el.classList.toggle("hot",s<=10);
-  el.querySelector(".ring").style.setProperty("--p",(R.left/(R.T.time*1000)*100).toFixed(1)+"%")}
+  el.querySelector(".ring").style.setProperty("--p",(R.left/fullMs()*100).toFixed(1)+"%")}
 function showQ(){
   const q=R.list[R.i];if(!q){finish();return}
   R.input="";R.cur={q,done:false};
+  if(!R.T.blitz)R.left=QT*1000;
   const T=R.T,n=R.list.length;
   const prog=T.blitz?`<div class="blitzc">${I.bolt}<b>${R.correct}</b><span>дұрыс</span></div>`
     :`<div class="track"><div class="fill" style="width:${R.i/n*100}%"></div></div><span class="count">${R.i+1}/${n}</span>`;
@@ -226,6 +229,7 @@ function resolve(ok,given,el){
   if(!T.blitz)R.running=false;
   const pad=document.getElementById("pad");if(pad)pad.classList.add("off");
   if(ok){
+    if(!T.blitz)R.saved+=Math.floor(R.left/1000);
     R.correct++;R.streak++;R.bestStreak=Math.max(R.bestStreak,R.streak);
     const bonus=R.streak>=3?5:0;R.pts+=10+bonus;
     if(el&&el.id==="blank")el.classList.add("ok");
@@ -255,6 +259,16 @@ function askQuit(){
   modal(`<h3 class="mtitle">Раундты тоқтатасың ба?</h3><p class="sub">Нәтиже сақталмайды.</p>`,[
     {t:"Жалғастыру",cls:"blue"},{t:"Иә, шығу",cls:"alt",fn:()=>{stopTimer();const s=R.T.subj;R=null;subject(s)}}]);
 }
+function qTimeUp(){
+  if(!R||!R.cur||R.cur.done)return;
+  const q=R.cur.q;R.cur.done=true;R.running=false;R.streak=0;R.wrong.push({q,given:"уақыт бітті"});sfx.bad();
+  const pad=document.getElementById("pad");if(pad)pad.classList.add("off");
+  document.querySelectorAll(".opt").forEach(b=>{b.disabled=true;if(b.querySelector("span:last-child").textContent===q.a)b.classList.add("ok");else b.classList.add("dim")});
+  document.getElementById("fb").innerHTML=`<div class="fb bad" role="status"><h4>Уақыт бітті!</h4>
+    <p>Дұрыс жауабы: <b>${esc(ansText(q))}</b></p><p>${esc(q.e)}</p><span class="story">Келесі сұраққа тағы ${QT} секунд беріледі.</span></div>
+    <div class="row" style="margin-top:12px"><button class="big blue" id="next">Келесі</button></div>`;
+  const nx=document.getElementById("next");nx.onclick=next;nx.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
 function timeUp(){
   if(!R)return;R.running=false;R.timeUp=true;sfx.bad();
   const o=document.createElement("div");o.className="toast";o.innerHTML=`${I.clock}<b>Уақыт бітті!</b>`;document.body.appendChild(o);
@@ -267,21 +281,21 @@ function finish(){
   const allDone=!T.blitz&&!R.timeUp;
   const secLeft=Math.ceil(R.left/1000);
   const stars=T.blitz?(R.correct>=20?3:R.correct>=14?2:R.correct>=8?1:0):(r=>r>=.9?3:r>=.7?2:r>=.5?1:0)(R.correct/n);
-  const tBonus=allDone?Math.round(secLeft/2):0,xp=R.pts+tBonus+stars*10;
+  const tBonus=T.blitz?0:Math.round(R.saved/6),xp=R.pts+tBonus+stars*10;
   let rec=false;const prev=P.best[id];
   if(T.blitz){if(R.correct>(P.blitz||0)){P.blitz=R.correct;rec=!!prev}P.best[id]={stars:Math.max(prev?prev.stars:0,stars)}}
   else if(!prev||stars>prev.stars||(stars===prev.stars&&R.correct>prev.c)){P.best[id]={stars,c:R.correct,n};rec=!!prev}
   const lvUp=addRound(R.correct,xp);
   const nb=[];
   if(!T.blitz&&R.correct===n&&!R.timeUp){award("perfect",nb);if(id==="mul")award("table",nb);if(T.subj==="kaz")award("words",nb)}
-  if(allDone&&secLeft>=T.time/2)award("fast",nb);
+  if(!T.blitz&&R.correct>=n*.8&&R.used<=n*20000)award("fast",nb);
   if(T.blitz&&R.correct>=20)award("blitz",nb);
   if(R.bestStreak>=10)award("combo",nb);
   commonBadges(nb);
   const skipped=T.blitz?0:R.list.length-answered;
   const v=[["Тағы бір рет көрейік!","Ережені қайта оқып, тағы шешіп көр. Міндетті түрде үйренесің!"],["Жақсы бастама!","Қате кеткен сұрақтарды қайталасаң, нәтижең бірден өседі."],
     ["Өте жақсы!","Сәл ғана қалды — келесі жолы 3 жұлдыз аласың!"],["Сен — нағыз чемпион!","Керемет нәтиже! Супер-Айназ!"]][stars];
-  const used=T.time-secLeft;
+  const used=T.blitz?T.time-secLeft:Math.round(R.used/1000);
   go(`${topbar()}
   <section class="panel res">
     <div class="bigstars">${[0,1,2].map(k=>`<span class="bs ${k<stars?"on":""}" style="animation-delay:${.2+k*.25}s">${I.star(k<stars?"var(--sun)":"var(--paper)")}</span>`).join("")}</div>

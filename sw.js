@@ -1,4 +1,4 @@
-const CACHE = "super-men-v2";
+const CACHE = "super-men-v3";
 const FILES = ["./", "index.html", "books.js", "tasks.js", "app.js", "manifest.webmanifest",
   "fonts/nunito-600.ttf", "fonts/nunito-700.ttf", "fonts/nunito-800.ttf", "fonts/nunito-900.ttf",
   "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png"];
