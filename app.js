@@ -49,7 +49,7 @@ function commonBadges(list){
   if(P.correct>=100)award("c100",list);if(levelOf(P.xp)>=5)award("lv6",list);
   saveP();
 }
-const totalStars=()=>Object.values(P.best).reduce((s,b)=>s+(b.stars||0),0)+Object.values(store.get("sm_bookstars",{})).reduce((s,v)=>s+v,0);
+const totalStars=()=>Object.values(P.best).reduce((s,b)=>s+(b.stars||0),0)+Object.values(store.get("sm_bookstars",{})).reduce((s,v)=>s+v,0)+Object.values(P.femoStars||{}).reduce((s,v)=>s+v,0);
 
 /* ---------- Дыбыс ---------- */
 let soundOn=store.get("sm_sound",true),actx=null;
@@ -126,11 +126,12 @@ function hub(){
   <div class="subjects">
     <button class="subj s-math" data-s="math"><span class="sic">+×</span><span class="stx"><b>Математика</b><small>Өлшем бірліктері, көбейту кестесі</small></span></button>
     <button class="subj s-kaz" data-s="kaz"><span class="sic">Аә</span><span class="stx"><b>Қазақ тілі</b><small>Сөз таптары, антоним, буын</small></span></button>
+    <button class="subj s-femo" data-s="femo"><span class="sic">${typeof ICUP!=="undefined"?ICUP:""}</span><span class="stx"><b>FEMO олимпиадасы</b><small>${typeof fSolved==="function"?`${fSolved()} / ${FEMO_Q.length} есеп · олимпиада жолы`:"Олимпиада есептері"}</small></span></button>
     <button class="subj s-book" data-s="book"><span class="sic">${I.book}</span><span class="stx"><b>Кітап тесті</b><small>«SUPER-МЕН» әңгімелері бойынша</small></span></button>
   </div>
   <p class="foot">Раунд сайын XP жина, жаңа деңгейлер мен марапаттарды аш!</p>`,()=>{
     bindBar();
-    document.querySelectorAll(".subj").forEach(b=>b.onclick=()=>b.dataset.s==="book"?bookHome():subject(b.dataset.s));
+    document.querySelectorAll(".subj").forEach(b=>b.onclick=()=>b.dataset.s==="book"?bookHome():b.dataset.s==="femo"?femoHome():subject(b.dataset.s));
     document.getElementById("toBadges").onclick=badges;
     const h=document.getElementById("hideInstall");if(h)h.onclick=()=>{store.set("sm_hide_install",true);h.parentElement.remove()};
   });
@@ -456,5 +457,4 @@ addEventListener("keydown",e=>{
   }
 });
 
-hub();
 if("serviceWorker" in navigator&&location.protocol!=="file:")addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
