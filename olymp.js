@@ -30,10 +30,10 @@ const ICUP=`<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 6h20v8a10 1
 const IBULB=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z" fill="var(--sun)" stroke="var(--ink)" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.5 20h5" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/></svg>`;
 
 /* ---------- Олимпиада картасы ---------- */
-function femoHome(){
+function femoTours(){
   screen="femo";
   const n=fSolved(),N=FEMO_Q.length,rk=fRank(n),nx=FRANK.find(x=>x[0]>n),w=fWrong(),dq=fDaily(),dd=fDailyDone();
-  go(`${topbar({back:1,title:"FEMO олимпиадасы"})}
+  go(`${topbar({back:1,title:"Сынақ олимпиада"})}
   <section class="panel fhero">
     <div class="fcup" style="background:${rk[2]}">${ICUP}</div>
     <div class="fhm">
@@ -43,10 +43,7 @@ function femoHome(){
       <p class="xptxt">${n} / ${N} есеп шешілді${nx?` · «${esc(nx[1])}» дейін ${nx[0]-n} есеп`:" · Барлығы шешілді!"}</p>
     </div>
   </section>
-  <div class="fact">
-    <button class="fcard fday ${dd?"done":""}" id="fDay"><span class="fbadge">${dd?I.check:"×2"}</span><b>Күн есебі</b><small>${dd?"Бүгінгі есеп шешілді! Ертең жаңасы келеді.":`${esc(FR[dq.r].t)} · ${dq.p} балл · XP екі есе!`}</small></button>
-    <button class="fcard fwr" id="fWr" ${w.length?"":"disabled"}><span class="fbadge">${w.length}</span><b>Қателер жұмысы</b><small>${w.length?"Шешілмеген есептерді қайта шеш":"Қате есептер жоқ — тамаша!"}</small></button>
-  </div>
+  <p class="lead2">Нағыз FEMO турлары: әр турда 10 есеп. Аралдарды өткен соң, аптасына бір тур шеш — нағыз олимпиададағыдай!</p>
   <h2 class="sec">Олимпиада жолы</h2>
   <div class="fmap">${FEMO_ROUNDS.map((r,i)=>{
     const qs=FR[r.id].qs,sv=qs.filter(q=>P.femo[q.id]>=2).length,st=P.femoStars[r.id]||0,cur=sv<qs.length&&(i===0||FEMO_ROUNDS.slice(0,i).every(x=>P.femoStars[x.id]));
@@ -55,10 +52,8 @@ function femoHome(){
       <span class="fnt"><b>${esc(r.t)}</b><small>${esc(r.sub)}</small><span class="fns">${[0,1,2].map(k=>I.star(k<st?"var(--sun)":"var(--paper)")).join("")}<em>${sv}/${qs.length}</em></span></span></button>`}).join("")}
   </div>
   <p class="foot">Олимпиадада асығудың қажеті жоқ: ойлан, сызып көр, сосын жауап бер. Кеңес алсаң — жартылай ұпай.</p>`,()=>{
-    bindBar(hub);
+    bindBar(femoHome);
     document.querySelectorAll(".fnode").forEach(b=>b.onclick=()=>femoRoundIntro(b.dataset.r));
-    document.getElementById("fDay").onclick=()=>femoStart("day",[dq]);
-    const wr=document.getElementById("fWr");if(w.length)wr.onclick=()=>femoStart("wrong",w.slice(0,10));
     const c=document.querySelector(".fnode.cur");if(c)setTimeout(()=>c.scrollIntoView({block:"center",behavior:"smooth"}),300);
   });
 }
@@ -77,7 +72,7 @@ function femoRoundIntro(rid){
       ${sv&&sv<qs.length?`<button class="big alt" id="go2">Шешілмегендер (${qs.length-sv})</button>`:""}
     </div>
   </section>`,()=>{
-    bindBar(femoHome);
+    bindBar(femoTours);
     document.getElementById("go").onclick=()=>femoStart(rid,qs);
     const g2=document.getElementById("go2");if(g2)g2.onclick=()=>femoStart(rid,qs.filter(q=>!(P.femo[q.id]>=2)),true);
   });
@@ -98,9 +93,10 @@ function femoQ(){
     <div class="track"><div class="fill" style="width:${F.i/n*100}%"></div></div><span class="count">${F.i+1}/${n}</span>
     <div class="tmr"><span class="sw">${I.clock}</span><span id="fclock">${fmt(Math.floor((performance.now()-F.t0)/1000))}</span></div></div>
   <section class="panel qcard">
-    <div class="qmeta"><span class="pill" style="background:var(--t2);color:#fff">${esc(r.t)} · №${q.n}</span><span class="pill t-sun">${q.p} балл</span>
+    <div class="qmeta">${typeof SMAP!=="undefined"&&SMAP[q.id]?`<span class="pill" style="background:${SMAP[q.id].c};color:#fff">${esc(SMAP[q.id].name)}</span>`:""}<span class="pill" style="background:var(--t2);color:#fff">${esc(r.t)} · №${q.n}</span><span class="pill t-sun">${q.p} балл</span>
       ${F.mode==="day"?`<span class="combo">×2 XP</span>`:""}<span class="ptsmall">${I.bolt}<span id="fxp">${F.xp}</span></span></div>
     <h2 class="qtext ftext">${esc(q.q)}</h2>
+    <div class="plan4 mini"><span><i>1</i>Екі рет оқы</span><span><i>2</i>Сызып көр</span><span><i>3</i>Шеш</span><span><i>4</i>Тексер</span></div>
     ${q.img?`<figure class="fig"><img src="${fimg(q.img)}" alt="Есептің суреті" loading="eager"></figure>`:""}
     ${q.k==="num"?`<div class="ansrow"><span class="albl">Жауабың:</span><span class="blank fans" id="blank">?</span></div>`
       :`<div class="opts ${q.opts.every(o=>o.length<=16)?"two":""}">${q.opts.map((o,i)=>`<button class="opt" data-i="${i}"><span class="k">${i+1}</span><span>${esc(o)}</span></button>`).join("")}</div>`}
@@ -182,9 +178,11 @@ function femoFinish(quit){
   if(isRound&&stars===3)award("femoR",nb);
   if(isRound&&!quit&&!F.partial&&F.clean&&done===F.list.length)award("femoClean",nb);
   if(P.femoDays.length>=5)award("femoDay",nb);
+  const isSt=F.mode.startsWith("st:"),stx=isSt?STRATS.find(x=>x.id===F.mode.slice(3)):null;
+  if(isSt)stAfter(stx).forEach(b=>nb.push(b));
   commonBadges(nb);
   const secs=Math.floor((performance.now()-F.t0)/1000),rk=fRank(sv);
-  const title=F.mode==="day"?"Күн есебі":F.mode==="wrong"?"Қателер жұмысы":FR[F.mode].t+" · "+FR[F.mode].sub;
+  const title=F.mode==="day"?"Күн есебі":F.mode==="wrong"?"Қателер жұмысы":isSt?(stx.i+1)+"-арал · "+stx.name:FR[F.mode].t+" · "+FR[F.mode].sub;
   go(`${topbar()}
   <section class="panel res">
     <p class="fk">${esc(title)}</p>
@@ -194,11 +192,11 @@ function femoFinish(quit){
     <div class="stats"><div class="stat"><b>+${Math.round(F.xp)+stars*10}</b><span>XP</span></div><div class="stat"><b>${fmt(secs)}</b><span>уақыт</span></div><div class="stat"><b>${sv}/${FEMO_Q.length}</b><span>барлық шешілген</span></div></div>
     <p class="sub">Олимпиада атағың: <b>${esc(rk[1])}</b></p>
     ${nb.length?`<div class="newb">${nb.map(b=>{const B=BADGES.find(x=>x.id===b);return `<span>${I.medal(true)}${esc(B.t)}</span>`}).join("")}</div>`:""}
-    <div class="row" style="width:100%">${isRound?`<button class="big" id="again">Қайта шешу</button>`:""}<button class="big ${isRound?"alt":""}" id="map">Олимпиада жолы</button></div>
+    <div class="row" style="width:100%">${isRound?`<button class="big" id="again">Қайта шешу</button>`:""}<button class="big ${isRound?"alt":""}" id="map">${isRound?"Сынақ турлары":isSt?"Аралға қайту":"Аралдар картасы"}</button></div>
   </section>`,()=>{
     bindBar();
     const a=document.getElementById("again");if(a)a.onclick=()=>femoRoundIntro(F.mode);
-    document.getElementById("map").onclick=femoHome;
+    document.getElementById("map").onclick=isRound?femoTours:isSt?()=>stIsle(stx):femoHome;
   });
   if(ok){sfx.win();confetti(Math.max(30,stars*55))}
   celebrate(lvUp,nb);
@@ -213,4 +211,3 @@ addEventListener("keydown",e=>{
   }else if(e.key==="Enter"){const nx=document.getElementById("next");if(nx){e.preventDefault();nx.click()}}
 });
 
-hub();
