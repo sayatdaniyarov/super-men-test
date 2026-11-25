@@ -453,6 +453,15 @@ mark{background:var(--sun);color:#1F2340;border-radius:6px;padding:0 4px}
 @media (max-width:560px){.isles,.fact{grid-template-columns:1fr}.plan4{grid-template-columns:repeat(2,minmax(0,1fr))}.owl{width:60px;height:60px}.owlsay.lg .owl{width:70px;height:70px}.bubble{font-size:15px}.idea,.exs,.exq{font-size:17px}.path3{grid-template-columns:1fr}}
 .intro .tbadge.big{width:84px;min-width:84px;height:84px;padding:0;flex:none;box-shadow:none;display:grid;font-size:26px}
 @media (max-width:560px){.pstep{flex-direction:row;flex-wrap:wrap;justify-content:flex-start;gap:4px 12px;padding:10px 14px}.pstep small{text-align:left}.intro .tbadge.big{width:64px;min-width:64px;height:64px}}
+.owlbtn{display:flex;align-items:center;gap:12px;align-self:flex-start;background:#F4E1C1;border:3px solid var(--ink);border-radius:999px;padding:4px 20px 4px 4px;box-shadow:4px 4px 0 var(--shadow);text-align:left;color:#1F2340}
+.owlbtn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--shadow)}
+.owlimg{flex:none;width:64px;height:64px;border-radius:50%;background:var(--paper);border:3px solid var(--ink);display:grid;place-items:center;overflow:hidden;animation:owlbob 2.4s ease-in-out infinite}
+.owlimg svg{width:58px;height:58px;margin-top:6px}
+.owlt{display:flex;flex-direction:column}.owlt b{font-family:var(--font-display);font-weight:900;font-size:19px}.owlt small{font-weight:800;font-size:14px}
+@keyframes owlbob{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg) translateY(-2px)}}
+.owlbox{width:min(620px,100%);max-height:88vh;overflow:auto;text-align:left;gap:14px}
+.owlmodal .mbox .row .big{flex:1 1 160px}
+.owlidea{margin:0;font-size:17px}
 </style>
 </head>
 <body>

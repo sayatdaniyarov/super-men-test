@@ -268,10 +268,12 @@ function stWarm(s){
       <ol class="wsteps">${w.steps.map((x,i)=>`<li class="${i<si?"ok":i===si?"cur":""}"><span>${esc(x.t)}</span>${i<si?`<b>${esc(String(x.a))}</b>`:""}</li>`).join("")}</ol>
       ${st.opts?`<div class="opts two">${st.opts.map((o,i)=>`<button class="opt" data-i="${i}"><span class="k">${i+1}</span><span>${esc(o)}</span></button>`).join("")}</div>`
         :`<div class="ansrow"><span class="albl">Жауабың:</span><span class="blank fans" id="blank">?</span></div>`}
+      ${owlBtn()}
       <div id="fb"></div>
     </section>
     ${st.opts?"":`<div class="pad" id="pad">${[1,2,3,4,5,6,7,8,9,"del",0,"ok"].map(x=>`<button class="key ${x==="ok"?"k-ok":x==="del"?"k-del":""}" data-k="${x}">${x==="del"?I.del:x==="ok"?"Тексеру":x}</button>`).join("")}</div>`}`,()=>{
       document.getElementById("quit").onclick=()=>stIsle(s);
+      document.getElementById("owlbtn").onclick=()=>owlHelp(s);
       if(st.opts)document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>check(st.opts[+b.dataset.i],b));
       else document.querySelectorAll(".key").forEach(b=>b.onclick=()=>press(b.dataset.k));
     });
@@ -349,3 +351,51 @@ window.fHint=function(){
 };
 
 hub();
+
+/* ================= Үкі-ұстаз көмекші батырмасы ================= */
+function owlHoot(n=2){
+  if(!soundOn)return;
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const t0=actx.currentTime,notes=n===1?[[0,.45,470,400]]:[[0,.32,430,390],[.42,.62,480,380]];
+    notes.forEach(([st,du,f1,f2])=>{
+      const o=actx.createOscillator(),g=actx.createGain(),lfo=actx.createOscillator(),lg=actx.createGain(),flt=actx.createBiquadFilter();
+      o.type="sine";flt.type="lowpass";flt.frequency.value=900;
+      o.frequency.setValueAtTime(f1,t0+st);o.frequency.exponentialRampToValueAtTime(f2,t0+st+du);
+      lfo.frequency.value=7;lg.gain.value=9;lfo.connect(lg).connect(o.frequency);
+      g.gain.setValueAtTime(0,t0+st);g.gain.linearRampToValueAtTime(.22,t0+st+.07);
+      g.gain.setValueAtTime(.2,t0+st+du*.6);g.gain.exponentialRampToValueAtTime(.0001,t0+st+du);
+      o.connect(flt).connect(g).connect(actx.destination);
+      o.start(t0+st);lfo.start(t0+st);o.stop(t0+st+du+.05);lfo.stop(t0+st+du+.05);
+    });
+  }catch(e){}
+}
+const owlBtn=()=>`<button class="owlbtn" id="owlbtn" aria-label="Үкі-ұстаздан көмек сұрау"><span class="owlimg">${OWL}</span><span class="owlt"><b>Үкі-ұстаз</b><small>Түсінбедім, көмектес!</small></span></button>`;
+BADGES.push({id:"owl5",t:"Үкінің досы",d:"Үкі-ұстаздан 5 рет көмек сұра"});
+function owlHelp(s){
+  owlHoot(2);
+  P.owlUses=(P.owlUses||0)+1;if(P.owlUses>=5){const nb=[];award("owl5",nb);}saveP();
+  let k=0,shown=0;
+  const ov=document.createElement("div");ov.className="modal owlmodal";ov.setAttribute("role","dialog");document.body.appendChild(ov);
+  function draw(){
+    const last=k===2,steps=s.ex.steps;
+    const body=[
+      `${say(`<b>Уһу-уһу! Келдім, Айназ!</b> Бұл есеп — <b>«${esc(s.name)}»</b> тәсілі. Есіңе түсір: өзіңе осы сиқырлы сұрақты қой:`)}
+       <div class="magic big"><b>«${esc(s.magic)}»</b></div>
+       <ul class="idea owlidea">${s.idea.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`,
+      `${say(`Қазір <b>ұқсас мысалды</b> бірге шешейік. «Келесі қадам» батырмасын бас!`)}
+       <div class="lcard"><p class="exq">${esc(s.ex.q)}</p><ol class="exs">${steps.map((t,i)=>`<li class="${i<shown?"on":""}">${esc(t)}</li>`).join("")}</ol>
+       ${shown>=steps.length?`<p class="exa">Жауабы: <b>${esc(s.ex.ans)}</b></p>`:`<button class="big blue" id="oReveal">Келесі қадам (${shown+1}/${steps.length})</button>`}</div>`,
+      `${say(`<b>Жарайсың!</b> Енді өз есебіңе қайт. Есебіңді <b>екі рет оқы</b>, <b>сызып көр</b> және сиқырлы сұрақты қой: «${esc(s.magic)}» Сен міндетті түрде табасың!`)}
+       <div class="plan4"><span><i>1</i>Екі рет оқы</span><span><i>2</i>Сызып көр</span><span><i>3</i>Шеш</span><span><i>4</i>Тексер</span></div>`][k];
+    const can=k!==1||shown>=steps.length;
+    ov.innerHTML=`<div class="mbox panel owlbox"><div class="dotsbar">${[0,1,2].map(i=>`<i class="${i<=k?"on":""}"></i>`).join("")}</div>${body}
+      <div class="row">${k?`<button class="big alt" id="oPrev">Артқа</button>`:`<button class="big alt" id="oClose">Жабу</button>`}
+      <button class="big" id="oNext" ${can?"":"disabled"}>${last?"Түсіндім, өзім шешемін!":"Әрі қарай"}</button></div></div>`;
+    const r=ov.querySelector("#oReveal");if(r)r.onclick=()=>{shown++;owlHoot(1);draw()};
+    const p=ov.querySelector("#oPrev");if(p)p.onclick=()=>{k--;draw()};
+    const c=ov.querySelector("#oClose");if(c)c.onclick=()=>ov.remove();
+    ov.querySelector("#oNext").onclick=()=>{if(last){ov.remove();sfx.ok()}else{k++;draw()}};
+    (ov.querySelector("#oReveal")||ov.querySelector("#oNext")).focus();
+  }
+  draw();
+}

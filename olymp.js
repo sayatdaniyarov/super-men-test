@@ -101,11 +101,13 @@ function femoQ(){
     ${q.k==="num"?`<div class="ansrow"><span class="albl">Жауабың:</span><span class="blank fans" id="blank">?</span></div>`
       :`<div class="opts ${q.opts.every(o=>o.length<=16)?"two":""}">${q.opts.map((o,i)=>`<button class="opt" data-i="${i}"><span class="k">${i+1}</span><span>${esc(o)}</span></button>`).join("")}</div>`}
     <div class="tools" id="ftools"><button class="ghost hintb" id="fhint">${IBULB}Кеңес</button></div>
+    ${typeof owlBtn==="function"&&typeof SMAP!=="undefined"&&SMAP[q.id]?owlBtn():""}
     <div id="fb"></div>
   </section>
   ${q.k==="num"?`<div class="pad" id="pad">${[1,2,3,4,5,6,7,8,9,"del",0,"ok"].map(x=>`<button class="key ${x==="ok"?"k-ok":x==="del"?"k-del":""}" data-k="${x}" aria-label="${x==="del"?"Өшіру":x==="ok"?"Тексеру":x}">${x==="del"?I.del:x==="ok"?"Тексеру":x}</button>`).join("")}</div>`:""}`,()=>{
     document.getElementById("quit").onclick=()=>modal(`<h3 class="mtitle">Олимпиададан шығасың ба?</h3><p class="sub">Шешкен есептерің сақталады.</p>`,[{t:"Жалғастыру",cls:"blue"},{t:"Иә, шығу",cls:"alt",fn:()=>{clearInterval(ftimer);femoFinish(true)}}]);
     document.getElementById("fhint").onclick=fHint;
+    const ob=document.getElementById("owlbtn");if(ob)ob.onclick=()=>owlHelp(SMAP[q.id]);
     if(q.k==="num")document.querySelectorAll(".key").forEach(b=>b.onclick=()=>fPress(b.dataset.k));
     else document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>fChoose(+b.dataset.i,b));
   });
